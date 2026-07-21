@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuChat</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo-dot"></span>
+      <span>DocuChat</span>
+    </div>
+
+    <button id="newChatBtn" class="new-chat-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      New chat
+    </button>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Document</div>
+
+      <label for="fileInput" class="upload-dropzone" id="dropzone">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="dropzoneText">Click or drop a .txt / .pdf file</span>
+      </label>
+      <input type="file" id="fileInput" accept=".txt,.pdf" hidden>
+
+      <div id="docCard" class="doc-card" hidden>
+        <div class="doc-icon">📄</div>
+        <div class="doc-info">
+          <div id="docName" class="doc-name"></div>
+          <div id="docMeta" class="doc-meta"></div>
+        </div>
+      </div>
+
+      <div id="uploadStatus" class="upload-status"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="messages" class="messages">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state-icon">💬</div>
+        <h1>Upload a document to get started</h1>
+        <p>Drop a .txt or .pdf file on the left, then ask anything about it.</p>
+      </div>
+    </div>
+
+    <form id="composer" class="composer">
+      <div class="composer-inner">
+        <textarea id="messageInput" placeholder="Upload a document first…" rows="1" disabled></textarea>
+        <button id="sendBtn" type="submit" disabled aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="composer-hint">Answers are generated only from the uploaded document.</div>
+    </form>
+  </main>
+
+</div>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

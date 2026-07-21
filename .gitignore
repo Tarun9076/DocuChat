@@ -1,0 +1,26 @@
+# Environment variables (contains API keys)
+.env
+
+# Vector database
+db/
+
+# Uploaded files (webapp writes here temporarily, then deletes them)
+webapp/uploads/*
+!webapp/uploads/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
