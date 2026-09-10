@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-persistent_directory = "db/chroma_db"
+persistent_directory = "../data/chroma_db"
 
 # Load embeddings and vector store
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")

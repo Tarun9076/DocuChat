@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def load_documents(docs_path="docs"):
+def load_documents(docs_path="../data/sample_docs"):
     """Load all text files from the docs directory"""
     print(f"Loading documents from {docs_path}...")
     
@@ -64,7 +64,7 @@ def split_documents(documents, chunk_size=1000, chunk_overlap=0):
     
     return chunks
 
-def create_vector_store(chunks, persist_directory="db/chroma_db"):
+def create_vector_store(chunks, persist_directory="../data/chroma_db"):
     """Create and persist ChromaDB vector store"""
     print("Creating embeddings and storing in ChromaDB...")
         
@@ -88,8 +88,8 @@ def main():
     print("=== RAG Document Ingestion Pipeline ===\n")
     
     # Define paths
-    docs_path = "docs"
-    persistent_directory = "db/chroma_db"
+    docs_path = "../data/sample_docs"
+    persistent_directory = "../data/chroma_db"
     
     # Check if vector store already exists
     if os.path.exists(persistent_directory):

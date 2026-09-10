@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 load_dotenv()
 
 # Connect to your document database
-persistent_directory = "db/chroma_db"
+persistent_directory = "../data/chroma_db"
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
 
