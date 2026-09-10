@@ -3,8 +3,9 @@ Retrieval + end-to-end evaluation harness for DocuChat.
 
 Part 1 (retrieval-only, free, no API calls): compares naive vector search,
 BM25 keyword search, hybrid ensemble, and cross-encoder reranking against a
-hand-labeled question set built from the actual docs/ corpus (Google,
-Microsoft, Nvidia, SpaceX, Tesla).
+hand-labeled question set built from the data/sample_docs/ corpus (Google,
+Microsoft, Nvidia, SpaceX, Tesla). If data/chroma_db doesn't exist yet, it's
+built automatically from data/sample_docs/ on first run.
 
   Hit Rate@k = % of questions where the needed fact was present in top-k
   MRR@k      = mean reciprocal rank of the first chunk containing the fact
@@ -18,9 +19,9 @@ ground-truth keywords. This is the number that matters for a resume claim
   Answer Accuracy = % of questions where the generated answer contains all
                      required fact keywords
 
-Run:
-    python eval_retrieval.py                  # retrieval-only
-    python eval_retrieval.py --end-to-end      # also runs Part 2 (costs Azure OpenAI tokens)
+Run (from the repo root):
+    python eval/eval_retrieval.py                  # retrieval-only
+    python eval/eval_retrieval.py --end-to-end      # also runs Part 2 (costs Azure OpenAI tokens)
 """
 
 import os
@@ -36,11 +37,14 @@ try:
 except ImportError:
     from langchain_classic.retrievers import EnsembleRetriever  # langchain >=1.0
 from dotenv import load_dotenv
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_core.documents import Document
+from langchain_text_splitters import CharacterTextSplitter
 
 load_dotenv()
 
 PERSIST_DIR = os.environ.get("EVAL_PERSIST_DIR", "data/chroma_db")
+SAMPLE_DOCS_DIR = os.environ.get("EVAL_SAMPLE_DOCS_DIR", "data/sample_docs")
 TOP_K = int(os.environ.get("EVAL_TOP_K", 5))
 
 # ──────────────────────────────────────────────────────────────────
@@ -95,6 +99,26 @@ QUESTIONS = [
     {"q": "What was Tesla's revenue in 2024?", "must_contain": ["97.7 billion"]},
     {"q": "Where is Tesla headquartered?", "must_contain": ["Austin"]},
 ]
+
+
+def build_index(persist_directory: str, docs_path: str):
+    """Ingest data/sample_docs/*.txt into a fresh persisted Chroma store."""
+    print(f"No index at {persist_directory} yet — building one from {docs_path}/...")
+    loader = DirectoryLoader(path=docs_path, glob="*.txt", loader_cls=TextLoader, loader_kwargs={"encoding": "utf-8"})
+    documents = loader.load()
+    if not documents:
+        raise FileNotFoundError(f"No .txt files found in {docs_path}.")
+
+    splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    chunks = splitter.split_documents(documents)
+
+    Chroma.from_documents(
+        documents=chunks,
+        embedding=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
+        persist_directory=persist_directory,
+        collection_metadata={"hnsw:space": "cosine"},
+    )
+    print(f"Built index with {len(chunks)} chunks.\n")
 
 
 def load_all_chunks(persist_directory: str):
@@ -243,10 +267,7 @@ def evaluate_end_to_end(llm, retrievers_subset, questions, k=TOP_K):
 
 def main():
     if not os.path.exists(PERSIST_DIR):
-        raise FileNotFoundError(
-            f"{PERSIST_DIR} does not exist. Run `python learning/1_ingestion_pipeline.py` first "
-            "(from the repo root) to build the vector store from data/sample_docs/."
-        )
+        build_index(PERSIST_DIR, SAMPLE_DOCS_DIR)
 
     print("Loading vector store and chunks...")
     db, chunks = load_all_chunks(PERSIST_DIR)

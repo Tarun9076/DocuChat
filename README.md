@@ -4,8 +4,6 @@ DocuChat is a Retrieval-Augmented Generation (RAG) web app: upload a document (`
 
 Retrieval quality isn't just claimed — it's measured. [`eval/eval_retrieval.py`](eval/eval_retrieval.py) is a 40-question benchmark (built from the actual sample corpus) that compares naive vector search against hybrid BM25+vector search, both at the retrieval level and end-to-end through real generated answers. See [Retrieval evaluation](#retrieval-evaluation) below.
 
-The repo also ships [`learning/`](learning/) — a set of numbered, standalone scripts that walk through core RAG concepts step by step (ingestion, retrieval, chunking strategies, multi-query retrieval, hybrid search, reranking). Useful if you want to see how each technique works in isolation before/instead of using the full webapp.
-
 ## Architecture
 
 ```
@@ -34,8 +32,7 @@ Each browser session (a signed cookie, no login) gets its own isolated Chroma co
 ├── run.py                   # local dev entrypoint
 ├── wsgi.py                  # production entrypoint (gunicorn/waitress)
 ├── eval/eval_retrieval.py   # retrieval + end-to-end accuracy benchmark
-├── learning/                 # 13 numbered scripts/notebooks teaching RAG concepts
-├── data/sample_docs/          # sample corpus (5 company profiles) used by eval/ and learning/
+├── data/sample_docs/          # sample corpus (5 company profiles) used by eval/
 ├── tests/                    # pytest suite (no Azure calls required)
 ├── Dockerfile
 └── .github/workflows/ci.yml  # lint + test on push/PR
@@ -117,10 +114,9 @@ docker run --env-file .env -p 5000:5000 docuchat
 
 ## Retrieval evaluation
 
-[`eval/eval_retrieval.py`](eval/eval_retrieval.py) grades retrieval and generation against a 40-question, fact-grounded test set built from `data/sample_docs/` (e.g. "Who founded Nvidia and when?" → the retrieved/generated text must contain "Jensen Huang" and "1993").
+[`eval/eval_retrieval.py`](eval/eval_retrieval.py) grades retrieval and generation against a 40-question, fact-grounded test set built from `data/sample_docs/` (e.g. "Who founded Nvidia and when?" → the retrieved/generated text must contain "Jensen Huang" and "1993"). It builds `data/chroma_db` from `data/sample_docs/` automatically on first run if it doesn't exist yet.
 
 ```bash
-python learning/1_ingestion_pipeline.py     # builds data/chroma_db from data/sample_docs/, once
 python eval/eval_retrieval.py               # retrieval-only, free (no LLM calls)
 python eval/eval_retrieval.py --end-to-end  # also grades real generated answers (uses Azure OpenAI)
 ```
@@ -134,32 +130,6 @@ Measured results on this corpus:
 | End-to-end answer accuracy | 70.0% | **80.0%** |
 
 The webapp itself currently uses naive vector search (`db.as_retriever(search_kwargs={"k": 5})` in `app/routes.py`) — the hybrid strategy is validated here and is the natural next upgrade for `app/rag.py`.
-
-## Running the learning scripts
-
-Each numbered script under `learning/` is self-contained and runnable from the repo root, e.g.:
-
-```bash
-python learning/1_ingestion_pipeline.py
-```
-
-Some notebooks/scripts need extra dependencies not required by the webapp — see [`requirements-learning.txt`](requirements-learning.txt).
-
-| Script | Topic |
-|---|---|
-| `1_ingestion_pipeline.py` | Loading, chunking, embedding, and storing documents in Chroma |
-| `2_retrieval_pipeline.py` | Querying the vector store for relevant chunks |
-| `3_answer_generation.py` | Generating answers from retrieved context with Azure OpenAI |
-| `4_history_aware_generation.py` | Conversational RAG with chat history |
-| `5_recursive_character_text_spliiter.py` | Recursive character text splitting |
-| `6_semantic_chunking.py` | Semantic chunking |
-| `7_agentic_chunking.py` | Agentic (LLM-guided) chunking |
-| `8_multi_modal_rag.ipynb` | Multi-modal RAG (text + images) |
-| `9_retrieval_methods.py` | Comparing different retrieval strategies |
-| `10_multi_query_retrieval.py` | Multi-query retrieval |
-| `11_reciprocal_rank_fusion.py` | Reciprocal Rank Fusion |
-| `12_hybrid_search.ipynb` | Hybrid search (keyword + vector) |
-| `13_reranker.ipynb` | Reranking retrieved results |
 
 ## Tests
 
@@ -182,4 +152,4 @@ This is a portfolio-scale deployment, and it's honest about where that shows:
 ## Notes
 
 - `.env` is git-ignored — never commit real API keys. Use `.env.example` as the template.
-- `data/chroma_db/` (learning scripts' persisted vector store) and `app/uploads/` are git-ignored.
+- `data/chroma_db/` (the eval harness's persisted vector store) and `app/uploads/` are git-ignored.
